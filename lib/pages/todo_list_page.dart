@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:todo_list/models/todo.dart';
+import 'package:todo_list/widgets/todo_list_item.dart';
 
 class TodoListPage extends StatefulWidget {
   TodoListPage({Key? key}) : super(key: key);
@@ -10,14 +12,18 @@ class TodoListPage extends StatefulWidget {
 class _TodoListPageState extends State<TodoListPage> {
   final TextEditingController todoController = TextEditingController();
 
-  List<String> todos = [];
+  List<Todo> todos = [];
+
+  Todo? deletedTodo;
+  int? deletedTodoPos;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding:
+              const EdgeInsets.only(bottom: 8, left: 16, right: 16, top: 64),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -56,10 +62,16 @@ class _TodoListPageState extends State<TodoListPage> {
                   ElevatedButton(
                     onPressed: () {
                       String text = todoController.text;
-                      setState(() {
-                        todos.add(text);
-                      });
-                      todoController.clear();
+                      if (todoController.text != '') {
+                        setState(() {
+                          Todo newTodo = Todo(
+                            title: text,
+                            dateTime: DateTime.now(),
+                          );
+                          todos.add(newTodo);
+                        });
+                        todoController.clear();
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       primary: const Color(0xff8C2EB2),
@@ -73,48 +85,29 @@ class _TodoListPageState extends State<TodoListPage> {
                 ],
               ),
               const SizedBox(height: 16),
-              ListView(
-                shrinkWrap: false,
-                children: [
-                  for (String todo in todos)
-                    Card(
-                      color: const Color(0xffeeeeee),
-                      child: ListTile(
-                        style: ListTileStyle.list,
-                        title: Text(
-                          todo,
-                          style: const TextStyle(
-                            color: Color(0xff8C2EB2),
-                            fontSize: 18,
-                          ),
-                        ),
-                        subtitle: const Text("01/07/2022"),
-                        leading: const Icon(
-                          Icons.save,
-                          size: 40,
-                        ),
-                        iconColor: const Color(0xff8C2EB2),
-                        onTap: () {
-                          print('Tarefa $todo');
-                        },
-                        onLongPress: () {
-                          print("LongPress Tarefa $todo");
-                        },
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (Todo todo in todos)
+                      TodoListItem(
+                        todo: todo,
+                        onDelete: onDelete,
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      "Você possui 0 tarefas pendentes",
+                      "Você possui ${todos.length} tarefas pendentes",
                     ),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: showDeleteTodosConfirmationDialog,
                     style: ElevatedButton.styleFrom(
                       primary: const Color(0xff8C2EB2),
                       padding: const EdgeInsets.all(14),
@@ -130,5 +123,73 @@ class _TodoListPageState extends State<TodoListPage> {
         ),
       ),
     );
+  }
+
+  void onDelete(Todo todo) {
+    deletedTodo = todo;
+    deletedTodoPos = todos.indexOf(todo);
+    setState(() {
+      todos.remove(todo);
+    });
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Tarefa ${todo.title} foi removida com sucesso!',
+          style: const TextStyle(
+            color: Color(0xff060708),
+          ),
+        ),
+        backgroundColor: Colors.white,
+        action: SnackBarAction(
+          label: 'Desfazer',
+          onPressed: () {
+            setState(() {
+              todos.insert(deletedTodoPos!, deletedTodo!);
+            });
+          },
+          textColor: const Color(0xff8C2EB2),
+        ),
+      ),
+    );
+  }
+
+  void showDeleteTodosConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('LIMPAR TUDO?'),
+        content:
+            const Text('Você tem certeza que deseja apagar TODAS as tarefas?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            style: TextButton.styleFrom(
+              primary: const Color(0xff8C2EB2),
+            ),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              deleteAllTodos();
+            },
+            style: TextButton.styleFrom(
+              primary: Colors.red,
+            ),
+            child: const Text('LIMPAR TUDO'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void deleteAllTodos() {
+    setState(() {
+      todos.clear();
+    });
   }
 }
