@@ -1,10 +1,22 @@
-# todo_list
+# MY TASKS
 
-A new Flutter project.
+This is an application created to help us remember the tasks we have to perform.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This is an application developed in Flutter (hybrid development).<br>
+<br>
+Application features:
+* Create tasks;
+* Delete a task;
+* Delete all tasks;
+* List the amount of pending tasks;
+
+It's worth checking out the app!
+<br>
+<br>
+<br>
+####
 
 A few resources to get you started if this is your first Flutter project:
 
